@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spooky Mirror</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nosifer&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Nosifer', cursive;
+            color: #fff;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mirror-frame {
+            border: 10px solid #4b392d;
+            border-radius: 15px;
+            width: 350px;
+            height: 450px;
+            position: relative;
+            background: #2c1b1b;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            overflow: hidden;
+            backdrop-filter: blur(6px);
+            transform: rotate(2deg);
+        }
+
+        .mirror {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .ghost {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        #detect-ghost-btn {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 18px;
+            color: #fff;
+            background-color: #2a2a2a;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+            transition: background-color 0.3s;
+        }
+
+        #detect-ghost-btn:hover {
+            background-color: #444;
+        }
+
+        .note {
+            background-color: rgba(51, 12, 12, 0.9);
+            padding: 15px;
+            width: 850px;
+            height: 250px;
+            margin-top: 30px;
+            border: 2px solid #5a2b2b;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .note h3 {
+            color: #f7d58a;
+            font-size: 22px;
+        }
+
+        .note p {
+            color: #fff8dc;
+            font-size: 14px;
+        }
+
+        .jumpscare {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .jumpscare img {
+            width: 50vw;
+            height: auto;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Spooky Mirror</h1>
+    <p>Find out what kind of ghost you are, try out with friends and see if you are ghost twins</p>
+
+    <div class="mirror-frame">
+        <div class="mirror">
+            <video id="camera-feed" autoplay></video>
+            <img id="ghost" alt="Ghost" class="ghost">
+        </div>
+    </div>
+
+    <button id="detect-ghost-btn">Detect Ghost</button>
+
+    <div id="note" class="note hidden">
+        <h3 id="ghost-history-title">History of the Ghost</h3>
+        <p id="ghost-history"></p>
+    </div>
+
+    <div id="jumpscare" class="jumpscare">
+        <img src="ghostimg/jumpscare.jpeg" alt="Jumpscare Image">
+    </div>
+    <audio id="jumpscare-sound" src="ghostimg/jump.mp3"></audio>
+
+    <audio id="eerie-music" src="ghostimg/eeri.mp3"></audio>
+    <script>
+        const cameraFeed = document.getElementById('camera-feed');
+        const ghostImage = document.getElementById('ghost');
+        const music = document.getElementById('eerie-music');
+        const jumpscareSound = document.getElementById('jumpscare-sound');
+        const jumpscare = document.getElementById('jumpscare');
+        const button = document.getElementById('detect-ghost-btn');
+        const note = document.getElementById('note');
+        const ghostHistory = document.getElementById('ghost-history');
+        const ghostHistoryTitle = document.getElementById('ghost-history-title');
+
+        const ghosts = [
+            {
+                "url": "ghostimg/ghost1.jpg",
+                "description": "This ghost is said to be the spirit of a sailor who perished at sea, forever searching for his lost love. His presence is always accompanied by the sound of distant waves and faint sobbing."
+            },
+            {
+                "url": "ghostimg/ghost2.png",
+                "description": "A cursed pirate, betrayed by his crew, roams the night, seeking revenge for his untimely demise. His ghostly figure is often seen sharpening a spectral cutlass, preparing for a battle that will never come."
+            },
+            {
+                "url": "ghostimg/ghost3.jpeg",
+                "description": "This apparition is believed to be the ghost of a witch, wrongfully executed, now haunting those who enter her domain. She is often seen clutching a broken hourglass, a symbol of the time stolen from her life."
+            },
+            {
+                "url": "ghostimg/ghost4.jpg",
+                "description": "The weeping ghost of a child who lost their way in the fog still wanders, searching for their mother. The chilling sound of soft footsteps can be heard whenever this lost soul is near."
+            },
+            {
+                "url": "ghostimg/ghost5.jpeg",
+                "description": "The ghost of a former captain, doomed to sail forever on phantom tides, appears to those who venture too close to the shore at night. His translucent figure, with hands clinging to a broken compass, drifts in the darkness, always seeking a way home."
+            },
+            {
+                "url": "ghostimg/ghost6.jpg",
+                "description": "The restless spirit of a Victorian woman, murdered on her wedding night, endlessly paces, her veil tattered and soaked in blood. They say you can still hear the faint chime of wedding bells before she appears."
+            },
+            {
+                "url": "ghostimg/ghost7.jpg",
+                "description": "This is the spirit of a plague doctor, who, after succumbing to the very illness he treated, now roams the streets, offering cures to the living. His hollow, echoing voice calls out, 'Do you need healing?'"
+            },
+            {
+                "url": "ghostimg/ghost8.jpg",
+                "description": "A ghostly blacksmith, forever trapped in the flames of his workshop. His hammering can be heard echoing in the dead of night, but when he appears, only embers and ash remain in his wake."
+            },
+            {
+                "url": "ghostimg/ghost9.jpg",
+                "description": "This ghost is a scholar who was obsessed with dark knowledge. After his mysterious death, he wanders libraries and study rooms, flipping through pages of invisible books, eternally searching for forbidden secrets."
+            },
+            {
+                "url": "ghostimg/ghost10.jpeg",
+                "description": "The spirit of a jester, once part of a royal court, haunts those who disturb his resting place. His laughter, eerie and mocking, can be heard before he appears, a twisted grin on his face, juggling the skulls of those he’s tormented."
+            }
+        ];
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                cameraFeed.srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Error accessing the camera: ', err);
+            });
+
+        button.addEventListener('click', function () {
+            button.disabled = true;
+            button.textContent = "Detecting...";
+            music.play();
+
+            setTimeout(function () {
+                const randomGhost = ghosts[Math.floor(Math.random() * ghosts.length)];
+                ghostImage.src = randomGhost.url;
+                ghostHistory.textContent = randomGhost.description;
+                ghostImage.style.opacity = '0.8';
+                note.classList.remove('hidden');
+                button.textContent = "Ghost Detected!";
+
+                const jumpscareChance = Math.random();
+                if (jumpscareChance < 0.2) { 
+                    setTimeout(() => {
+                        console.log('Jumpscare!');
+                        jumpscare.style.display = 'flex';
+                        jumpscareSound.play();
+                        setTimeout(() => {
+                            jumpscare.style.display = 'none';
+                        }, 3000);
+                    }, 2000); 
+                }
+
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = "Detect Ghost";
+                    ghostImage.style.opacity = '0';
+                    note.classList.add('hidden');
+                }, 10000);
+            }, 5000);
+        });
+    </script>
+</body>
+
+</html>
